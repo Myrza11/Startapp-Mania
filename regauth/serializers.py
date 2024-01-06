@@ -5,29 +5,35 @@ from django.core.validators import EmailValidator
 from django.utils.crypto import get_random_string
 from django.core.mail import send_mail
 from rest_framework.validators import UniqueValidator
+import re
+from phonenumber_field.modelfields import PhoneNumberField
+
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
 
     password = serializers.CharField(write_only=True)
     password_confirm = serializers.CharField(write_only=True)
-    email = serializers.EmailField(validators=[EmailValidator(message='Enter a valid email address.')])
-    first_name = serializers.CharField(
-        validators=[RegexValidator(regex='^[a-zA-Z]*$', message='Only letters are allowed.'),
-                    UniqueValidator(queryset=CustomUsers.objects.all(), message='This first_name is already in use.')]
-    )
     username = serializers.CharField(
         validators=[RegexValidator(regex='^[a-zA-Z]*$', message='Only letters are allowed.'),
                     UniqueValidator(queryset=CustomUsers.objects.all(), message='This username is already in use.')]
     )
     email = serializers.EmailField(
         validators=[
-            EmailValidator(message='Enter a valid email address.'),
             UniqueValidator(queryset=CustomUsers.objects.all(), message='This email is already in use.')
         ]
     )
+    phone_number = PhoneNumberField()
+    name = serializers.CharField(max_length=50)
+
     class Meta:
         model = CustomUsers
-        fields = '__all__'
+        fields = ['id', 'username', 'email', 'name', 'phone_number', 'avatar', 'confirmation_code', "date_joined", "avatar", 'password', 'password_confirm']
+
+    def validate_email(self, data):
+        # Проверка, что домен email'а - это Gmail
+        if not re.match(r'^[^@]+@gmail\.com$', data):
+            raise serializers.ValidationError("Only Gmail addresses are allowed.")
+        return data
 
     def validate(self, data):
         
@@ -42,9 +48,10 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         
         user = CustomUsers.objects.create_user(
             username=validated_data['username'],
-            email=validated_data.get('email', ''),
-            first_name=validated_data['first_name'],
+            name=validated_data['name'],
+            email=validated_data.get('email'),
             password=validated_data['password'],
+            phone_number=validated_data['phone_number'],
             is_active=False, 
             confirmation_code=confirmation_code,
         )
