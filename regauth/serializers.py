@@ -7,7 +7,7 @@ from django.core.mail import send_mail
 from rest_framework.validators import UniqueValidator
 import re
 from phonenumber_field.modelfields import PhoneNumberField
-
+from django.contrib.auth.password_validation import validate_password
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
 
@@ -27,7 +27,12 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUsers
-        fields = ['id', 'username', 'email', 'name', 'phone_number', 'avatar', 'confirmation_code', "date_joined", "avatar", 'password', 'password_confirm']
+        fields = ['id', 'username', 'email', 'name', 'phone_number', 'avatar', 'confirmation_code', "avatar", 'password', 'password_confirm', 'created_at', 'is_active']
+
+    def validate_password(self, data):
+        if validate_password(data) is not None:
+            raise serializers.ValidationError("Password min length is 8")
+        return data
 
     def validate_email(self, data):
         # Проверка, что домен email'а - это Gmail
