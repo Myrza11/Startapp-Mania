@@ -9,32 +9,63 @@ class IdeaSupporterSerializer(serializers.ModelSerializer):
 
 
 class IdeaCommentSerializer(serializers.ModelSerializer):
-    replies = serializers.SerializerMethodField()
+    # replies = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
 
     class Meta:
         model = IdeaComment
-        fields = '__all__'
-
-    def get_replies(self, obj):
-        replies = IdeaComment.objects.filter(parent_comment=obj)
-        return IdeaCommentSerializer(replies, many=True).data
+        fields = ["id" , "likes_count" , "text", "created_at", "idea","user", "parent_comment"]
+    # def get_replies(self, obj):
+    #     if obj and isinstance(obj, IdeaComment):
+    #         replies = IdeaComment.objects.filter(parent_comment=obj)
+    #         return IdeaCommentSerializer(replies, many=True).data
+    #     return []
 
     def get_likes_count(self, obj):
-        return IdeaCommentLikes.objects.filter(comment=obj).count()
+        if isinstance(obj, IdeaComment):
+            return IdeaCommentLikes.objects.filter(comment=obj).count()
+        return 0
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+
+        # Уточните, что вы хотите получить text только от комментариев
+        if 'text' in representation:
+            representation.pop('text')
+
+        return representation
 
 
 class IdeaSerializer(serializers.ModelSerializer):
-    comments = IdeaCommentSerializer(many=True, read_only=True)
-    likes_count = serializers.SerializerMethodField()
-    supporters_count = serializers.SerializerMethodField()
+    supporters = serializers.SerializerMethodField()
 
     class Meta:
         model = Idea
-        fields = '__all__'
+        fields = ['id', 'name', 'description', 'created_at', 'likes', 'created_by', 'supporters', 'comments']
 
-    def get_likes_count(self, obj):
-        return IdeaLikes.objects.filter(likes=obj).count()
+    def get_supporters(self, obj):
+        return [user.username for user in obj.supporters.all()]
 
-    def get_supporters_count(self, obj):
-        return IdeaSupporter.objects.filter(idea=obj).count()
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        idea_comments = IdeaComment.objects.filter(idea=instance)
+        comments_data = IdeaCommentSerializer(idea_comments, many=True).data
+        representation['comments'] = comments_data
+        return representation
+# class IdeaSerializer(serializers.ModelSerializer):
+#     comments = IdeaCommentSerializer(many=True, read_only=True)
+#     supporters = serializers.SerializerMethodField()
+#
+#     class Meta:
+#         model = Idea
+#         fields = ['id', 'name', 'description', 'created_at', 'likes', 'created_by', 'supporters', 'comments']
+#
+#     def to_representation(self, instance):
+#         representation = super().to_representation(instance)
+#         idea_comments = IdeaComment.objects.filter(idea=instance)
+#         comments_data = IdeaCommentSerializer(idea_comments, many=True).data
+#         representation['comments'] = comments_data
+#         return representation
+#
+#     def get_supporters(self, obj):
+#         return [user.username for user in obj.supporters.all()]

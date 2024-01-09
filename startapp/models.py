@@ -26,6 +26,9 @@ class IdeaComment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     parent_comment = models.ForeignKey('self', null=True, blank=True, related_name='replies', on_delete=models.CASCADE)
 
+    def __str__(self):
+        return f"{self.user.username}:{self.text}"
+
 
 class IdeaLikes(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)

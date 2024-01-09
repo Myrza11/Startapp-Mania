@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import IdeaCreate, IdeaLikeView, IdeaDetailView, IdeaCommentCreateView, IdeaCommentLikeView, \
-    IdeaSupporterView, UserIdeasView, CommentReplyCreateView
+    IdeaSupporterView, UserIdeasView, CommentReplyCreateView,  IdeaAllCommentsView
 
 urlpatterns = [
     path('ideas-create/', IdeaCreate.as_view(), name='idea-create'),
@@ -11,5 +11,6 @@ urlpatterns = [
     path('ideas/<int:pk>/supporter/', IdeaSupporterView.as_view(), name='idea-supporter'),
     path('user-ideas/', UserIdeasView.as_view(), name='user-ideas'),
     path('ideas/<int:idea_id>/comment/<int:parent_comment_id>/comment/', CommentReplyCreateView.as_view(),name='comment_reply_create'),
+    path('ideas/<int:pk>/show-comments/', IdeaAllCommentsView.as_view(), name='idea-without-comments'),
 
 ]

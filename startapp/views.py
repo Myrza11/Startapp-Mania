@@ -2,7 +2,7 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from .models import Idea, IdeaLikes, IdeaComment, IdeaCommentLikes, IdeaSupporter
 from .serializers import IdeaSerializer, IdeaCommentSerializer, IdeaSupporterSerializer
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 
 class CommentReplyCreateView(generics.CreateAPIView):
@@ -67,12 +67,6 @@ class IdeaLikeView(generics.CreateAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class IdeaDetailView(generics.RetrieveAPIView):
-    queryset = Idea.objects.all()
-    serializer_class = IdeaSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-
-
 class IdeaCommentCreateView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = IdeaCommentSerializer
@@ -135,3 +129,23 @@ class UserIdeasView(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
         return Idea.objects.filter(created_by=user)
+
+
+class IdeaAllCommentsView(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = IdeaCommentSerializer
+
+    def get_queryset(self):
+        idea_id = self.kwargs.get('pk')
+        return IdeaComment.objects.filter(idea=idea_id)
+
+
+class IdeaDetailView(generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = IdeaSerializer
+    queryset = Idea.objects.all()
+
+    def get(self, request, *args, **kwargs):
+        idea = self.get_object()
+        serializer = self.get_serializer(idea)
+        return Response(serializer.data)
