@@ -11,24 +11,6 @@ class CustomUsers(AbstractUser):
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     confirmation_code = models.CharField(max_length=20, blank=True)
-    current_invitation = models.ForeignKey('Invitation', null=True, blank=True, on_delete=models.SET_NULL)
-
-    def accept_invitation(self):
-        if self.current_invitation:
-            # Обработка принятия приглашения
-            # Например, можно добавить пользователя к команде
-            # и очистить поле текущего приглашения
-            self.current_invitation.accept(self)
-            self.current_invitation = None
-            self.save()
-
-    def decline_invitation(self):
-        if self.current_invitation:
-            # Обработка отклонения приглашения
-            # Например, можно просто очистить поле текущего приглашения
-            self.current_invitation.decline()
-            self.current_invitation = None
-            self.save()
     
     def __str__(self):
         return self.username
