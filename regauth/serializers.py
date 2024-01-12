@@ -9,6 +9,7 @@ import re
 from phonenumber_field.modelfields import PhoneNumberField
 from django.contrib.auth.password_validation import validate_password
 
+
 class UserRegistrationSerializer(serializers.ModelSerializer):
 
     password = serializers.CharField(write_only=True)
@@ -57,7 +58,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             email=validated_data.get('email'),
             password=validated_data['password'],
             phone_number=validated_data['phone_number'],
-            is_active=False, 
+            is_active=False,
             confirmation_code=confirmation_code,
         )
 

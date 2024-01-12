@@ -9,17 +9,17 @@ class IdeaSupporterSerializer(serializers.ModelSerializer):
 
 
 class IdeaCommentSerializer(serializers.ModelSerializer):
-    # replies = serializers.SerializerMethodField()
+    replies = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
 
     class Meta:
         model = IdeaComment
-        fields = ["id" , "likes_count" , "text", "created_at", "idea","user", "parent_comment"]
-    # def get_replies(self, obj):
-    #     if obj and isinstance(obj, IdeaComment):
-    #         replies = IdeaComment.objects.filter(parent_comment=obj)
-    #         return IdeaCommentSerializer(replies, many=True).data
-    #     return []
+        fields = ["id", "likes_count","replies", "text", "created_at", "idea","user", "parent_comment"]
+    def get_replies(self, obj):
+        if obj and isinstance(obj, IdeaComment):
+            replies = IdeaComment.objects.filter(parent_comment=obj)
+            return IdeaCommentSerializer(replies, many=True).data
+        return []
 
     def get_likes_count(self, obj):
         if isinstance(obj, IdeaComment):
@@ -28,10 +28,6 @@ class IdeaCommentSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-
-        # Уточните, что вы хотите получить text только от комментариев
-        if 'text' in representation:
-            representation.pop('text')
 
         return representation
 
