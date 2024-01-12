@@ -6,8 +6,10 @@ from phonenumber_field.modelfields import PhoneNumberField
 class CustomUsers(AbstractUser):
     username = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=50)
+    surename = models.CharField(max_length=50)
     email = models.EmailField(unique=True)
     phone_number = PhoneNumberField()
+    social_media = models.TextField(null=True, blank=True)
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     confirmation_code = models.CharField(max_length=20, blank=True)

@@ -8,6 +8,8 @@ from rest_framework.validators import UniqueValidator
 import re
 from phonenumber_field.modelfields import PhoneNumberField
 from django.contrib.auth.password_validation import validate_password
+from urllib.parse import urlparse
+
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
 
@@ -24,10 +26,13 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     )
     phone_number = PhoneNumberField()
     name = serializers.CharField(max_length=50)
+    surename = serializers.CharField(max_length=50)
+    social_media = serializers.CharField(required=False)
+
 
     class Meta:
         model = CustomUsers
-        fields = ['id', 'username', 'email', 'name', 'phone_number', 'avatar', 'confirmation_code', "avatar", 'password', 'password_confirm', 'created_at', 'is_active']
+        fields = ['id', 'username', 'email', 'name', 'phone_number', 'avatar', 'confirmation_code', "avatar", 'password', 'password_confirm', 'created_at', 'is_active', 'surename', 'social_media']
 
     def validate_password(self, data):
         if validate_password(data) is not None:
@@ -35,18 +40,25 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return data
 
     def validate_email(self, data):
-        # Проверка, что домен email'а - это Gmail
         if not re.match(r'^[^@]+@gmail\.com$', data):
             raise serializers.ValidationError("Only Gmail addresses are allowed.")
         return data
 
     def validate(self, data):
-        
-        # Проверяем, что пароли совпадают
         if data.get('password') != data.get('password_confirm'):
             raise serializers.ValidationError("Passwords do not match.")
-
         return data
+        
+    def input_social_link(self, data):
+        while True:
+            social_link = data
+            parsed_url = urlparse(social_link)
+            
+            # Проверяем, что введенная строка имеет схему http или https и хост не пустой
+            if parsed_url.scheme in ['http', 'https'] and parsed_url.netloc:
+                return social_link
+            else:
+                print("Неправильный формат ссылки. Пожалуйста, введите корректную ссылку.")
     
     def create(self, validated_data):
         confirmation_code = get_random_string(length=20)
@@ -54,6 +66,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         user = CustomUsers.objects.create_user(
             username=validated_data['username'],
             name=validated_data['name'],
+            surename=validated_data['surename'],
+            social_media=validated_data.get('social_media', ''),
             email=validated_data.get('email'),
             password=validated_data['password'],
             phone_number=validated_data['phone_number'],
