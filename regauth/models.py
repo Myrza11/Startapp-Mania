@@ -14,7 +14,6 @@ class CustomUsers(AbstractUser):
     created_at = models.DateTimeField(auto_now_add=True)
     confirmation_code = models.CharField(max_length=20, blank=True)
 
-    
     def __str__(self):
         return self.username
 

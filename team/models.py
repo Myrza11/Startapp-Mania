@@ -5,8 +5,38 @@ from django.conf import settings
 
 
 class Team(models.Model):
-    name = models.CharField(max_length=255)
-    description = models.TextField()
+    name = models.CharField(max_length=50)
+    discribtion = models.TextField()
+    idea = models.OneToOneField(Idea)
+    team_logo = models.ImageField(upload_to='team-logo/', null=True, blank=True)
+    captain = models.ForeignKey(settings.CustomUsers, on_delete=models.CASCADE)
+
+
+class Invitation(models.Model):
+    PENDING = 'Pending'
+    ACCEPTED = 'Accepted'
+    DECLINED = 'Declined'
+
+    INVITATION_STATUS_CHOICES = [
+        (ACCEPTED, 'accepted'),
+        (DECLINED, 'declined'),
+        (PENDING, 'pending')
+
+    ]
+
+    user = models.ForeignKey(settings.CustomUsers, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    invitation_status = models.CharField(max_length=20, choices=INVITATION_STATUS_CHOICES, default=PENDING)
+
+    def accept(self):
+        if self.invitation_status == Invitation.ACCEPTED:
+            self.team.participants.add(self.user)
+            self.team.save()
+
+    def decline(self):
+        if self.invitation_status == Invitation.PENDING:
+            self.invitation_status = Invitation.DECLINED
+            self.save()
 
 
 class Chat(models.Model):
