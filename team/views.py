@@ -6,6 +6,7 @@ from rest_framework import status
 from .models import Message, Chat
 from .serializers import MessageSerializer, ChatSerializer
 
+
 class SendMessageView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = MessageSerializer
@@ -17,7 +18,9 @@ class SendMessageView(generics.CreateAPIView):
         try:
             chat = Chat.objects.get(pk=chat_id)
         except Chat.DoesNotExist:
-            return Response({'detail': 'Chat not found.'}, status=status.HTTP_404_NOT_FOUND)
+            team = request.user.team
+            chat = Chat.objects.create(team=team)
+            chat.users.set(team.members.all())
 
         message = Message.objects.create(chat=chat, sender=request.user, text=text)
         serializer = MessageSerializer(message)

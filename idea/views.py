@@ -6,6 +6,9 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 
 
 class CommentReplyCreateView(generics.CreateAPIView):
+    """
+    Оставляет коммент под комментом
+    """
     permission_classes = [IsAuthenticated]
     serializer_class = IdeaCommentSerializer
 
@@ -30,6 +33,9 @@ class CommentReplyCreateView(generics.CreateAPIView):
 
 
 class IdeaCreate(generics.ListCreateAPIView):
+    """
+    Апи для создание идеи принимает такие поля: name, description
+    """
     permission_classes = [IsAuthenticated]
     serializer_class = IdeaSerializer
 
@@ -47,6 +53,9 @@ class IdeaCreate(generics.ListCreateAPIView):
 
 
 class IdeaLikeView(generics.CreateAPIView):
+    """
+    Апи для того чтобы ставить лайки в idea в самом апи передаешь id idea и отправляешь запрос
+    """
     permission_classes = [IsAuthenticated]
     serializer_class = IdeaSerializer
 
@@ -68,6 +77,9 @@ class IdeaLikeView(generics.CreateAPIView):
 
 
 class IdeaCommentCreateView(generics.CreateAPIView):
+    """
+    Апи для создание комментариев под idea отправляется только text
+    """
     permission_classes = [IsAuthenticated]
     serializer_class = IdeaCommentSerializer
 
@@ -87,6 +99,9 @@ class IdeaCommentCreateView(generics.CreateAPIView):
 
 
 class IdeaCommentLikeView(generics.CreateAPIView):
+    """
+    Апи для того чтобы ставить лайки в комментарии
+    """
     permission_classes = [IsAuthenticated]
     serializer_class = IdeaCommentSerializer
 
@@ -105,6 +120,10 @@ class IdeaCommentLikeView(generics.CreateAPIView):
 
 
 class IdeaSupporterView(generics.CreateAPIView):
+    """
+        Апи для того чтобы поддержать идею, апи передаешь id idea и отправляешь запрос
+
+    """
     permission_classes = [IsAuthenticated]
     serializer_class = IdeaSerializer
 
@@ -123,6 +142,9 @@ class IdeaSupporterView(generics.CreateAPIView):
 
 
 class UserIdeasView(generics.ListAPIView):
+    """
+    Авторизованный юзер получает все данные об всех его Идей
+    """
     serializer_class = IdeaSerializer
     permission_classes = [IsAuthenticated]
 
@@ -132,7 +154,10 @@ class UserIdeasView(generics.ListAPIView):
 
 
 class IdeaAllCommentsView(generics.ListAPIView):
-    permission_classes = [AllowAny]
+    """
+    Указыывется id Идеи и он выдает все комментаррии этой Идеии
+    """
+    permission_classes = [IsAuthenticated]
     serializer_class = IdeaCommentSerializer
 
     def get_queryset(self):
@@ -141,7 +166,10 @@ class IdeaAllCommentsView(generics.ListAPIView):
 
 
 class IdeaDetailView(generics.RetrieveAPIView):
-    permission_classes = [AllowAny]
+    """
+    Передается id Идеи и выдает все данные об этой idea
+    """
+    permission_classes = [IsAuthenticated]
     serializer_class = IdeaSerializer
     queryset = Idea.objects.all()
 

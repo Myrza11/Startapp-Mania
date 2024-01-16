@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-f-24pr+_s*jc_kh&z16f%46na=dkk2hfckgvr_lv&wft9)74j(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '217.151.230.35']
 
 
 # Application definition
@@ -44,8 +44,8 @@ INSTALLED_APPS = [
     'idea',
     'drf_spectacular',
     'drf_spectacular_sidecar',
-    # 'corsheaders',
-    'team'
+    'corsheaders',
+    'team',
 
 ]
 
@@ -57,6 +57,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
 ]
 
 ROOT_URLCONF = 'startappmania.urls'
@@ -214,3 +216,27 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3030',
+    'http://217.151.230.35',
+]
+
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+]
