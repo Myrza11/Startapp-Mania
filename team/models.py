@@ -1,15 +1,15 @@
-# Ваш файл models.py
-
 from django.db import models
 from django.conf import settings
+from idea.models import Idea
 
 
 class Team(models.Model):
     name = models.CharField(max_length=50)
-    discribtion = models.TextField()
-    idea = models.OneToOneField(Idea)
+    description = models.TextField()
+    idea = models.OneToOneField(Idea, on_delete=models.CASCADE, default=1)
     team_logo = models.ImageField(upload_to='team-logo/', null=True, blank=True)
-    captain = models.ForeignKey(settings.CustomUsers, on_delete=models.CASCADE)
+    captain = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, default=None)
+    participants = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='teams')
 
 
 class Invitation(models.Model):
@@ -24,7 +24,7 @@ class Invitation(models.Model):
 
     ]
 
-    user = models.ForeignKey(settings.CustomUsers, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     invitation_status = models.CharField(max_length=20, choices=INVITATION_STATUS_CHOICES, default=PENDING)
 

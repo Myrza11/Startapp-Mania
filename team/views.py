@@ -7,6 +7,13 @@ from .models import Message, Chat
 from .serializers import MessageSerializer, ChatSerializer
 
 
+from rest_framework import generics, permissions
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Message, Chat, Team
+from .serializers import MessageSerializer, ChatSerializer
+
+
 class SendMessageView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = MessageSerializer
@@ -18,7 +25,11 @@ class SendMessageView(generics.CreateAPIView):
         try:
             chat = Chat.objects.get(pk=chat_id)
         except Chat.DoesNotExist:
-            team = request.user.team
+            # Если чат не существует, создаем новый
+            team = Team.objects.filter(members=request.user).first()
+            if not team:
+                return Response({'detail': 'Пользователь не принадлежит ни к одной команде.'}, status=status.HTTP_400_BAD_REQUEST)
+
             chat = Chat.objects.create(team=team)
             chat.users.set(team.members.all())
 

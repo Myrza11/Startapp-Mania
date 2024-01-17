@@ -1,7 +1,13 @@
 # Ваш файл serializers.py
 
 from rest_framework import serializers
-from .models import Message, Chat
+from .models import Message, Chat, Team
+
+
+class TeamSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Team
+        fields = '__all__'
 
 
 class MessageSerializer(serializers.ModelSerializer):
