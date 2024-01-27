@@ -1,7 +1,6 @@
 
 from django.db import models
 from django.conf import settings
-from regauth.models import CustomUsers
 
 
 class Idea(models.Model):

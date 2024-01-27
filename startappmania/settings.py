@@ -220,6 +220,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3030',
     'http://217.151.230.35',
+    'http://localhost:5173',
+
 ]
 
 CORS_ALLOW_METHODS = [
