@@ -3,8 +3,38 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
+from idea.models import Idea
 from .models import Message, Chat, Team
-from .serializers import MessageSerializer, TeamSerializer
+from .serializers import MessageSerializer, TeamSerializer, TeamCreateSerializer
+from django.shortcuts import get_object_or_404
+
+
+class CreateTeamFromIdea(generics.CreateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = TeamCreateSerializer
+
+    def post(self, request, *args, **kwargs):
+        idea_id = kwargs.get('idea_id')
+
+        team_data = {
+                    'name': request.data.get('name'),
+                    'description': request.data.get('description',''),
+                    'captain': request.user.pk,
+                    'idea': idea_id,  # Используйте idea.id вместо жестко заданного значения
+                    'supporters': request.data.get('supporters', [])  # Получаем supporters из request.data
+
+        }
+
+        try:
+            idea = Idea.objects.get(pk=idea_id)
+        except Idea.DoesNotExist:
+            return Response({'detail': 'Идея с указанным ID не найдена'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.serializer_class(data=team_data)
+        if serializer.is_valid():
+            serializer.save(idea=idea, captain=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class SendMessageView(generics.CreateAPIView):
@@ -46,3 +76,39 @@ class TeamInfo(generics.RetrieveAPIView):
     def get_object(self):
         team_id = self.kwargs.get("team_id")
         return get_object_or_404(Team, id=team_id)
+
+
+class UserTeamListView(generics.ListAPIView):
+    serializer_class = TeamSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return Team.objects.filter(participants=user)
+
+
+# class CreateTeamFromIdea(APIView):
+#     permission_classes = [IsAuthenticated]
+#     serializer_class = TeamCreateSerializer
+#
+#     def post(self, request, idea_id):
+#
+#         idea = get_object_or_404(Idea, pk=idea_id)
+#
+#         name = request.data.get('name')
+#         description = request.data.get('description', '')
+#         supporters_ids = request.data.get('supporters', [])
+#
+#         team_data = {
+#             'name': name,
+#             'description': description,
+#             'captain': request.user.pk,
+#             'idea': idea.id,  # Используйте idea.id вместо жестко заданного значения
+#         }
+#
+#         team_serializer = TeamCreateSerializer(data=team_data)
+#         if team_serializer.is_valid():
+#             team = team_serializer.save()
+#             team_serializer.save_supporters(team, supporters_ids)
+#             return Response(team_serializer.data, status=status.HTTP_201_CREATED)
+#         return Response(team_serializer.errors, status=status.HTTP_400_BAD_REQUEST)

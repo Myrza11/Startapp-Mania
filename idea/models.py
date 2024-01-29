@@ -1,4 +1,3 @@
-
 from django.db import models
 from django.conf import settings
 
@@ -8,7 +7,7 @@ class Idea(models.Model):
     description = models.TextField()
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
-    likes = models.IntegerField(default=0)  # Измените это поле на IntegerField
+    likes = models.IntegerField(default=0)
     supporters = models.ManyToManyField(settings.AUTH_USER_MODEL, through='IdeaSupporter', related_name='supported_ideas', blank=True)
     comments = models.ManyToManyField(settings.AUTH_USER_MODEL, through='IdeaComment', related_name='idea_comments')
 

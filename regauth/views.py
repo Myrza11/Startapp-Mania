@@ -1,21 +1,16 @@
 from django.conf import settings
-from django.shortcuts import render
 from .models import ConfirmationCode
 from rest_framework.permissions import AllowAny
 from .serializers import *
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
 from .forms import CaptchaSerializer
 from rest_framework import generics, status
-from django.contrib.auth.views import LogoutView
-from rest_framework.decorators import api_view, permission_classes
 
-# Отправляем код пользователю, 
-# далльше проверяем код который мы создали с кодом который написал пользователь если они совпадают то активируем пользователя
+
 class UserRegistrationView(APIView):
     permission_classes = [AllowAny]
     serializer_class = UserRegistrationSerializer

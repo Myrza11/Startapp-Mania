@@ -47,6 +47,8 @@ class IdeaCreate(generics.ListCreateAPIView):
 
         if serializer.is_valid():
             idea = serializer.save(created_by=user)
+            idea_id = idea.id  # Получаем idea_id после сохранения идеи
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

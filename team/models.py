@@ -4,12 +4,12 @@ from idea.models import Idea
 
 
 class Team(models.Model):
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50,  unique=True)
     description = models.TextField()
-    idea = models.OneToOneField(Idea, on_delete=models.CASCADE, default=1)
+    idea = models.ForeignKey(Idea, on_delete=models.CASCADE,  null=True, blank=True)
     team_logo = models.ImageField(upload_to='team-logo/', null=True, blank=True)
     captain = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, default=None)
-    participants = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='teams')
+    supporters = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='supported_teams')
 
 
 class Invitation(models.Model):

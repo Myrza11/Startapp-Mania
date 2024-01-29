@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from .models import CustomUsers
 from django.core.validators import RegexValidator
-from django.core.validators import EmailValidator
 from django.utils.crypto import get_random_string
 from django.core.mail import send_mail
 from rest_framework.validators import UniqueValidator
@@ -11,7 +10,6 @@ from django.contrib.auth.password_validation import validate_password
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
-
     password = serializers.CharField(write_only=True)
     password_confirm = serializers.CharField(write_only=True)
     username = serializers.CharField(

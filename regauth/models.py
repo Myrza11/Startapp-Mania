@@ -14,13 +14,13 @@ class CustomUsers(AbstractUser):
     created_at = models.DateTimeField(auto_now_add=True)
     confirmation_code = models.CharField(max_length=20, blank=True)
 
+
     def __str__(self):
         return self.username
 
     def generate_confirmation_code(self):
         code = get_random_string(length=20)
         return ConfirmationCode.objects.create(user=self, code=code)
-
 
 
 class ConfirmationCode(models.Model):
