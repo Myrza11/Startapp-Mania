@@ -1,11 +1,13 @@
 from django.conf import settings
+from rest_framework.generics import RetrieveAPIView, RetrieveUpdateDestroyAPIView, get_object_or_404
+
 from .models import ConfirmationCode
 from rest_framework.permissions import AllowAny
 from .serializers import *
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from rest_framework.permissions import IsAuthenticated
 from .forms import CaptchaSerializer
 from rest_framework import generics, status
@@ -48,8 +50,24 @@ class UserRegistrationView(APIView):
     
 
 class CustomUserLoginView(TokenObtainPairView):
-    # permission_classes = [AllowAny]
-    pass
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        tokens = response.data
+
+        # Получаем access токен из ответа
+        access_token = tokens.get('access', None)
+
+        if access_token:
+            # Парсим access токен
+            access_token_instance = AccessToken(access_token)
+            # Получаем полезную нагрузку (payload)
+            payload = access_token_instance.payload
+            # Получаем id пользователя из полезной нагрузки
+            user_id = payload['user_id']
+            # Добавляем id пользователя в ответ
+            tokens['user_id'] = user_id
+
+        return Response(tokens, status=status.HTTP_200_OK)
 
 
 class CustomUserTokenRefreshView(APIView):
@@ -177,17 +195,22 @@ class UserListView(generics.ListAPIView):
     queryset = CustomUsers.objects.all()
 
 
-class UserUpdateView(generics.RetrieveUpdateAPIView):
+class UserSearchView(APIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = UserSerializer
-    queryset = CustomUsers.objects.all()
 
-    def partial_update(self, request, *args, **kwargs):
-        allowed_fields = ['avatar']
-        data = {k: v for k, v in request.data.items() if k in allowed_fields}
+    def get(self, request, pk):
+        # Получаем пользователя по идентификатору (primary key)
+        user = get_object_or_404(CustomUsers, pk=pk)
 
-        serializer = self.get_serializer(self.get_object(), data=data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
+        # Сериализуем пользователя
+        serializer = UserSerializer(user)
 
         return Response(serializer.data)
+
+
+class UserUpdateView(RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserSerializer
+
+    def get_object(self):
+        return self.request.user

@@ -17,26 +17,25 @@ class Invitation(models.Model):
     ACCEPTED = 'Accepted'
     DECLINED = 'Declined'
 
-    INVITATION_STATUS_CHOICES = [
-        (ACCEPTED, 'accepted'),
-        (DECLINED, 'declined'),
-        (PENDING, 'pending')
-
+    STATUS_CHOICES = [
+        (PENDING, 'Pending'),
+        (ACCEPTED, 'Accepted'),
+        (DECLINED, 'Declined')
     ]
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_invitations', null=True, blank=True)
+    recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='received_invitations', null=True, blank=True)
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
-    invitation_status = models.CharField(max_length=20, choices=INVITATION_STATUS_CHOICES, default=PENDING)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
 
     def accept(self):
-        if self.invitation_status == Invitation.ACCEPTED:
-            self.team.participants.add(self.user)
-            self.team.save()
+        self.status = Invitation.ACCEPTED
+        self.save()
+        self.team.supporters.add(self.recipient)
 
     def decline(self):
-        if self.invitation_status == Invitation.PENDING:
-            self.invitation_status = Invitation.DECLINED
-            self.save()
+        self.status = Invitation.DECLINED
+        self.save()
 
 
 class Chat(models.Model):

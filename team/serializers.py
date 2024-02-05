@@ -1,7 +1,7 @@
 # Ваш файл serializers.py
 
 from rest_framework import serializers
-from .models import Message, Chat, Team
+from .models import Message, Chat, Team, Invitation
 from regauth.models import CustomUsers
 
 
@@ -34,4 +34,10 @@ class MessageSerializer(serializers.ModelSerializer):
 class ChatSerializer(serializers.ModelSerializer):
     class Meta:
         model = Chat
+        fields = '__all__'
+
+
+class InvitationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Invitation
         fields = '__all__'

@@ -4,8 +4,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from idea.models import Idea
-from .models import Message, Chat, Team
-from .serializers import MessageSerializer, TeamSerializer, TeamCreateSerializer
+from regauth.models import CustomUsers
+from .models import Message, Chat, Team, Invitation
+from .serializers import MessageSerializer, TeamSerializer, TeamCreateSerializer, InvitationSerializer
 from django.shortcuts import get_object_or_404
 
 
@@ -14,25 +15,24 @@ class CreateTeamFromIdea(generics.CreateAPIView):
     serializer_class = TeamCreateSerializer
 
     def post(self, request, *args, **kwargs):
-        idea_id = kwargs.get('idea_id')
+        idea_id = request.data.get('idea_id')
+        supporters = request.data.get('supporters', [])
 
         team_data = {
                     'name': request.data.get('name'),
-                    'description': request.data.get('description',''),
+                    'description': request.data.get('description', ''),
                     'captain': request.user.pk,
-                    'idea': idea_id,  # Используйте idea.id вместо жестко заданного значения
-                    'supporters': request.data.get('supporters', [])  # Получаем supporters из request.data
+                    'idea': idea_id,
+                    'supporters': supporters
 
         }
 
-        try:
-            idea = Idea.objects.get(pk=idea_id)
-        except Idea.DoesNotExist:
-            return Response({'detail': 'Идея с указанным ID не найдена'}, status=status.HTTP_404_NOT_FOUND)
-
         serializer = self.serializer_class(data=team_data)
         if serializer.is_valid():
-            serializer.save(idea=idea, captain=request.user)
+            team = serializer.save(idea_id=idea_id, captain=request.user)
+            for user_id in supporters:
+                user = get_object_or_404(CustomUsers, id=user_id)
+                Invitation.objects.create(recipient=user, team=team)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -87,28 +87,40 @@ class UserTeamListView(generics.ListAPIView):
         return Team.objects.filter(participants=user)
 
 
-# class CreateTeamFromIdea(APIView):
-#     permission_classes = [IsAuthenticated]
-#     serializer_class = TeamCreateSerializer
-#
-#     def post(self, request, idea_id):
-#
-#         idea = get_object_or_404(Idea, pk=idea_id)
-#
-#         name = request.data.get('name')
-#         description = request.data.get('description', '')
-#         supporters_ids = request.data.get('supporters', [])
-#
-#         team_data = {
-#             'name': name,
-#             'description': description,
-#             'captain': request.user.pk,
-#             'idea': idea.id,  # Используйте idea.id вместо жестко заданного значения
-#         }
-#
-#         team_serializer = TeamCreateSerializer(data=team_data)
-#         if team_serializer.is_valid():
-#             team = team_serializer.save()
-#             team_serializer.save_supporters(team, supporters_ids)
-#             return Response(team_serializer.data, status=status.HTTP_201_CREATED)
-#         return Response(team_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class AcceptInvitationView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        invitation_id = request.data.get('invitation_id')
+        try:
+            invitation = Invitation.objects.get(pk=invitation_id, user=request.user)
+        except Invitation.DoesNotExist:
+            return Response({'detail': 'Приглашение не найдено'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Принятие приглашения
+        invitation.accept()
+        return Response({'detail': 'Приглашение принято'}, status=status.HTTP_200_OK)
+
+
+class DeclineInvitationView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        invitation_id = request.data.get('invitation_id')
+        try:
+            invitation = Invitation.objects.get(pk=invitation_id, user=request.user)
+        except Invitation.DoesNotExist:
+            return Response({'detail': 'Приглашение не найдено'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Отклонение приглашения
+        invitation.decline()
+        return Response({'detail': 'Приглашение отклонено'}, status=status.HTTP_200_OK)
+
+
+class UserInvitationListView(generics.ListAPIView):
+    serializer_class = InvitationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return Invitation.objects.filter(user=user)

@@ -92,4 +92,16 @@ class ResetPasswordSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUsers
-        fields = '__all__'
+        fields = ["id", "last_login", "is_superuser", "first_name", "last_name", "is_staff", "is_active", "date_joined", "username","name",
+    "second_name",
+    "email",
+    "phone_number",
+    "avatar",
+    "created_at",
+    "confirmation_code",
+    "ability",
+    "link",
+    "link_name",
+    "groups",
+    "user_permissions"
+                  ]

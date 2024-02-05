@@ -11,6 +11,8 @@ urlpatterns = [
     path('reset-password/', ResetPasswordView.as_view()),
     path('logout/', TokenBlacklistView.as_view(), name='token_logout'),
     path('user-list/', UserListView.as_view()),
-    path('user-update/<int:pk>/', UserUpdateView.as_view()),
+    path('user-search/<int:pk>/', UserSearchView.as_view()),
+    path('user-info/', UserUpdateView.as_view()),
     path('captcha/', CaptchaView.as_view())
+
 ]

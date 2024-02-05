@@ -155,7 +155,7 @@ class UserIdeasView(generics.ListAPIView):
         return Idea.objects.filter(created_by=user)
 
 
-class IdeaAllCommentsView(generics.ListAPIView):
+class IdeaAllCommentsView(generics.ListAPIView):    
     """
     Указыывется id Идеи и он выдает все комментаррии этой Идеии
     """
