@@ -15,6 +15,7 @@ class IdeaCommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = IdeaComment
         fields = ["id", "likes_count", "replies", "text", "created_at", "idea", "user", "parent_comment"]
+
     def get_replies(self, obj):
         if obj and isinstance(obj, IdeaComment):
             replies = IdeaComment.objects.filter(parent_comment=obj)

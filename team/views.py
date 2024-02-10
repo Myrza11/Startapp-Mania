@@ -23,7 +23,6 @@ class CreateTeamFromIdea(generics.CreateAPIView):
                     'description': request.data.get('description', ''),
                     'captain': request.user.pk,
                     'idea': idea_id,
-                    'supporters': supporters
 
         }
 
@@ -67,33 +66,14 @@ class SendMessageView(generics.CreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-class TeamInfo(generics.RetrieveAPIView):
-    queryset = Team.objects.all()
-    serializer_class = TeamSerializer
-    permission_classes = [IsAuthenticated]
-    lookup_field = 'id'
-
-    def get_object(self):
-        team_id = self.kwargs.get("team_id")
-        return get_object_or_404(Team, id=team_id)
-
-
-class UserTeamListView(generics.ListAPIView):
-    serializer_class = TeamSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        return Team.objects.filter(participants=user)
-
-
 class AcceptInvitationView(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         invitation_id = request.data.get('invitation_id')
+
         try:
-            invitation = Invitation.objects.get(pk=invitation_id, user=request.user)
+            invitation = Invitation.objects.get(pk=invitation_id, recipient=request.user)
         except Invitation.DoesNotExist:
             return Response({'detail': 'Приглашение не найдено'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -123,4 +103,30 @@ class UserInvitationListView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        return Invitation.objects.filter(user=user)
+        return Invitation.objects.filter(recipient=user)
+
+
+class AllTeamsListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    queryset = Team.objects.all()
+    serializer_class = TeamSerializer
+
+
+class UserTeamListView(generics.ListAPIView):
+    serializer_class = TeamSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return Team.objects.filter(supporters=user)
+
+
+class TeamInfo(generics.RetrieveAPIView):
+    queryset = Team.objects.all()
+    serializer_class = TeamSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'id'
+
+    def get_object(self):
+        team_id = self.kwargs.get("team_id")
+        return get_object_or_404(Team, id=team_id)

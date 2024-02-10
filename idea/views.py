@@ -32,7 +32,7 @@ class CommentReplyCreateView(generics.CreateAPIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class IdeaCreate(generics.ListCreateAPIView):
+class IdeaCreate(generics.CreateAPIView):
     """
     Апи для создание идеи принимает такие поля: name, description
     """
@@ -179,3 +179,9 @@ class IdeaDetailView(generics.RetrieveAPIView):
         idea = self.get_object()
         serializer = self.get_serializer(idea)
         return Response(serializer.data)
+
+
+class IdeaAllView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = IdeaSerializer
+    queryset = Idea.objects.all()
