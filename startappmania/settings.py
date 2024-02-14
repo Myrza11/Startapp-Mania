@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-f-24pr+_s*jc_kh&z16f%46na=dkk2hfckgvr_lv&wft9)74j('
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '217.151.230.35']
 
@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     'drf_spectacular_sidecar',
     'corsheaders',
     'team',
-
+    'event',
 ]
 
 MIDDLEWARE = [
@@ -217,13 +217,14 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3030',
     'http://217.151.230.35',
     'http://localhost:5173',
-
 ]
+
+CORS_ALLOW_ALL_HEADERS = True
+
 
 CORS_ALLOW_METHODS = [
     'DELETE',

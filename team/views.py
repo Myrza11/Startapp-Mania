@@ -56,7 +56,6 @@ class SendMessageView(generics.CreateAPIView):
         try:
             chat = Chat.objects.get(pk=chat_id, team=team)
         except Chat.DoesNotExist:
-            # Если чат не существует, создаем новый
             chat = Chat.objects.create(team=team)
             chat.users.set(team.participants.all())
 
@@ -77,7 +76,6 @@ class AcceptInvitationView(generics.GenericAPIView):
         except Invitation.DoesNotExist:
             return Response({'detail': 'Приглашение не найдено'}, status=status.HTTP_404_NOT_FOUND)
 
-        # Принятие приглашения
         invitation.accept()
         return Response({'detail': 'Приглашение принято'}, status=status.HTTP_200_OK)
 
@@ -92,7 +90,6 @@ class DeclineInvitationView(generics.GenericAPIView):
         except Invitation.DoesNotExist:
             return Response({'detail': 'Приглашение не найдено'}, status=status.HTTP_404_NOT_FOUND)
 
-        # Отклонение приглашения
         invitation.decline()
         return Response({'detail': 'Приглашение отклонено'}, status=status.HTTP_200_OK)
 

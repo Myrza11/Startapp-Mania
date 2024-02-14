@@ -62,20 +62,24 @@ class IdeaLikeView(generics.CreateAPIView):
     serializer_class = IdeaSerializer
 
     def post(self, request, *args, **kwargs):
-        user = request.user
-        idea_id = kwargs.get('pk')
-        idea = Idea.objects.get(pk=idea_id)
+        try:
+            user = request.user
+            idea_id = kwargs.get('pk')
+            idea = Idea.objects.get(pk=idea_id)
 
-        if IdeaLikes.objects.filter(user=user, likes=idea).exists():
-            return Response({'detail': 'You have already liked this idea.'}, status=status.HTTP_400_BAD_REQUEST)
+            if IdeaLikes.objects.filter(user=user, likes=idea).exists():
+                return Response({'detail': 'You have already liked this idea.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        idea.likes += 1
-        idea.save()
+            idea.likes += 1
+            idea.save()
 
-        IdeaLikes.objects.create(user=user, likes=idea)
+            IdeaLikes.objects.create(user=user, likes=idea)
 
-        serializer = self.serializer_class(idea)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+            serializer = self.serializer_class(idea)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except:
+            return Response({'detail': 'No idea'}, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class IdeaCommentCreateView(generics.CreateAPIView):
@@ -86,18 +90,22 @@ class IdeaCommentCreateView(generics.CreateAPIView):
     serializer_class = IdeaCommentSerializer
 
     def post(self, request, *args, **kwargs):
-        idea_id = kwargs.get('pk')
-        idea = Idea.objects.get(pk=idea_id)
-        user = request.user
+        try:
+            idea_id = kwargs.get('pk')
+            idea = Idea.objects.get(pk=idea_id)
+            user = request.user
 
-        serializer_data = {'idea': idea.id, 'user': user.id, 'text': request.data.get('text')}
-        serializer = self.serializer_class(data=serializer_data)
+            serializer_data = {'idea': idea.id, 'user': user.id, 'text': request.data.get('text')}
+            serializer = self.serializer_class(data=serializer_data)
 
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            return Response({'detail': 'No idea'}, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class IdeaCommentLikeView(generics.CreateAPIView):
@@ -107,19 +115,22 @@ class IdeaCommentLikeView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = IdeaCommentSerializer
 
+
     def post(self, request, *args, **kwargs):
-        user = request.user
-        comment_id = kwargs.get('pk')
-        comment = IdeaComment.objects.get(pk=comment_id)
+        try:
+            user = request.user
+            comment_id = kwargs.get('pk')
+            comment = IdeaComment.objects.get(pk=comment_id)
 
-        if IdeaCommentLikes.objects.filter(user=user, comment=comment).exists():
-            return Response({'detail': 'You have already liked this comment.'}, status=status.HTTP_400_BAD_REQUEST)
+            if IdeaCommentLikes.objects.filter(user=user, comment=comment).exists():
+                return Response({'detail': 'You have already liked this comment.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        IdeaCommentLikes.objects.create(user=user, comment=comment)
+            IdeaCommentLikes.objects.create(user=user, comment=comment)
 
-        serializer = self.serializer_class(comment)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
+            serializer = self.serializer_class(comment)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except:
+            return Response({'detail': 'No idea'}, status=status.HTTP_400_BAD_REQUEST)
 
 class IdeaSupporterView(generics.CreateAPIView):
     """
@@ -130,17 +141,20 @@ class IdeaSupporterView(generics.CreateAPIView):
     serializer_class = IdeaSerializer
 
     def post(self, request, *args, **kwargs):
-        user = request.user
-        idea_id = kwargs.get('pk')
-        idea = Idea.objects.get(pk=idea_id)
+        try:
+            user = request.user
+            idea_id = kwargs.get('pk')
+            idea = Idea.objects.get(pk=idea_id)
 
-        if IdeaSupporter.objects.filter(user=user, idea=idea).exists():
-            return Response({'detail': 'You have already supported this idea.'}, status=status.HTTP_400_BAD_REQUEST)
+            if IdeaSupporter.objects.filter(user=user, idea=idea).exists():
+                return Response({'detail': 'You have already supported this idea.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        IdeaSupporter.objects.create(user=user, idea=idea)
+            IdeaSupporter.objects.create(user=user, idea=idea)
 
-        serializer = self.serializer_class(idea)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+            serializer = self.serializer_class(idea)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except:
+            return Response({'detail': 'No idea'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserIdeasView(generics.ListAPIView):

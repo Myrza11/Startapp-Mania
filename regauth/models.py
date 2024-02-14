@@ -44,3 +44,12 @@ class ConfirmationCode(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.code}"
     
+
+# class Friendship(models.Model):
+#     sender = models.ForeignKey(CustomUsers, related_name='sent_invitations', on_delete=models.CASCADE)
+#     receiver = models.ForeignKey(CustomUsers, related_name='received_invitations', on_delete=models.CASCADE)
+#     status = models.CharField(max_length=20, choices=[('pending', 'Pending'), ('accepted', 'Accepted'), ('rejected', 'Rejected')], default='pending')
+#     created_at = models.DateTimeField(auto_now_add=True)
+#
+#     class Meta:
+#         unique_together = ['sender', 'receiver']

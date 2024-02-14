@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUsers
+from .models import *
 from django.core.validators import RegexValidator
 from django.utils.crypto import get_random_string
 from django.core.mail import send_mail
@@ -105,3 +105,24 @@ class UserSerializer(serializers.ModelSerializer):
     "groups",
     "user_permissions"
                   ]
+
+
+class CustomUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUsers
+        fields = ['id', 'username', 'name', 'email', 'phone_number', 'avatar']
+
+#
+# class FriendshipSerializer(serializers.ModelSerializer):
+#     sender = CustomUserSerializer()
+#     receiver = CustomUserSerializer()
+#
+#     class Meta:
+#         model = Friendship
+#         fields = ['id', 'sender', 'receiver', 'status', 'created_at']
+#
+#
+# class FriendshipCreateSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Friendship
+#         fields = ['sender', 'receiver', 'status']
