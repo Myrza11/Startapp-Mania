@@ -7,10 +7,17 @@ from rest_framework.validators import UniqueValidator
 import re
 from phonenumber_field.modelfields import PhoneNumberField
 from django.contrib.auth.password_validation import validate_password
+from drf_spectacular.utils import extend_schema
+from rest_framework import serializers
+from .models import CustomUsers, Works, Socials
+from idea.serializers import IdeaSerializer
+from team.serializers import TeamSerializer
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
+
     password = serializers.CharField(write_only=True)
+
     password_confirm = serializers.CharField(write_only=True)
     username = serializers.CharField(
         validators=[RegexValidator(regex='^[a-zA-Z]*$', message='Only letters are allowed.'),
@@ -26,7 +33,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUsers
-        fields = ['id', 'username', 'email', 'name', 'phone_number', 'avatar', 'confirmation_code', "avatar", 'password', 'password_confirm', 'created_at', 'is_active']
+        fields = ['id', 'username', 'email', 'name', 'phone_number', 'avatar', 'confirmation_code',  'password', 'password_confirm', 'created_at', 'is_active']
 
     def validate_password(self, data):
         if validate_password(data) is not None:
@@ -34,14 +41,12 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return data
 
     def validate_email(self, data):
-        # Проверка, что домен email'а - это Gmail
         if not re.match(r'^[^@]+@gmail\.com$', data):
             raise serializers.ValidationError("Only Gmail addresses are allowed.")
         return data
 
     def validate(self, data):
         
-        # Проверяем, что пароли совпадают
         if data.get('password') != data.get('password_confirm'):
             raise serializers.ValidationError("Passwords do not match.")
 
@@ -49,6 +54,9 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         confirmation_code = get_random_string(length=20)
+
+        works_data = validated_data.pop('works', None)  # Получаем данные о работах (если есть)
+        socials_data = validated_data.pop('socials', None)
         
         user = CustomUsers.objects.create_user(
             username=validated_data['username'],
@@ -59,6 +67,12 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             is_active=False,
             confirmation_code=confirmation_code,
         )
+
+        if works_data:
+            Works.objects.create(created_by=user, **works_data)
+
+        if socials_data:
+            Socials.objects.create(created_by=user, **socials_data)
 
         subject = 'Confirmation code'
         message = f'Your confirmation code is: {confirmation_code}'
@@ -89,28 +103,49 @@ class ResetPasswordSerializer(serializers.Serializer):
     new_password = serializers.CharField(write_only=True, required=True)
 
 
+class WorksSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Works
+        fields = ['id', 'name', 'logo', 'link']
+
+
+class SocialsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Socials
+        fields = ['id', 'name', 'logo', 'link']
+
+
 class UserSerializer(serializers.ModelSerializer):
+    ideas = serializers.SerializerMethodField()
+    works = serializers.SerializerMethodField()
+    socials = serializers.SerializerMethodField()
+    teams = serializers.SerializerMethodField()
+
+    def get_ideas(self, obj):
+        ideas = Idea.objects.filter(created_by=obj)
+        serializer = IdeaSerializer(ideas, many=True)
+        return serializer.data
+
+    def get_works(self, obj):
+        works = Works.objects.filter(created_by=obj)
+        serializer = WorksSerializer(works, many=True)
+        return serializer.data
+
+    def get_socials(self, obj):
+        socials = Socials.objects.filter(created_by=obj)
+        serializer = SocialsSerializer(socials, many=True)
+        return serializer.data
+
+    def get_teams(self, obj):
+        teams = Team.objects.filter(supporters=obj)
+        serializer = TeamSerializer(teams, many=True)
+        return serializer.data
+
     class Meta:
         model = CustomUsers
-        fields = ["id", "last_login", "is_superuser", "first_name", "last_name", "is_staff", "is_active", "date_joined", "username","name",
-    "second_name",
-    "email",
-    "phone_number",
-    "avatar",
-    "created_at",
-    "confirmation_code",
-    "ability",
-    "link",
-    "link_name",
-    "groups",
-    "user_permissions"
-                  ]
+        fields = ['id', 'username', 'name', 'second_name', 'email', 'phone_number', 'avatar', 'created_at', 'confirmation_code',  'is_active', 'skills', 'tags',  'teams', 'works', 'socials', 'ideas']
 
 
-class CustomUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CustomUsers
-        fields = ['id', 'username', 'name', 'email', 'phone_number', 'avatar']
 
 #
 # class FriendshipSerializer(serializers.ModelSerializer):

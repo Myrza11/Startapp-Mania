@@ -8,11 +8,14 @@ from regauth.models import CustomUsers
 from .models import Message, Chat, Team, Invitation
 from .serializers import MessageSerializer, TeamSerializer, TeamCreateSerializer, InvitationSerializer
 from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import extend_schema
+
 
 
 class CreateTeamFromIdea(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = TeamCreateSerializer
+    @extend_schema(tags=['TEAM'])
 
     def post(self, request, *args, **kwargs):
         idea_id = request.data.get('idea_id')
@@ -39,6 +42,7 @@ class CreateTeamFromIdea(generics.CreateAPIView):
 class SendMessageView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = MessageSerializer
+    @extend_schema(tags=['TEAM'])
 
     def post(self, request, *args, **kwargs):
         team_id = kwargs.get('team_id')
@@ -67,6 +71,7 @@ class SendMessageView(generics.CreateAPIView):
 
 class AcceptInvitationView(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
+    @extend_schema(tags=['TEAM'])
 
     def post(self, request, *args, **kwargs):
         invitation_id = request.data.get('invitation_id')
@@ -82,6 +87,7 @@ class AcceptInvitationView(generics.GenericAPIView):
 
 class DeclineInvitationView(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
+    @extend_schema(tags=['TEAM'])
 
     def post(self, request, *args, **kwargs):
         invitation_id = request.data.get('invitation_id')
@@ -97,6 +103,7 @@ class DeclineInvitationView(generics.GenericAPIView):
 class UserInvitationListView(generics.ListAPIView):
     serializer_class = InvitationSerializer
     permission_classes = [permissions.IsAuthenticated]
+    @extend_schema(tags=['TEAM'])
 
     def get_queryset(self):
         user = self.request.user
@@ -112,6 +119,7 @@ class AllTeamsListView(generics.ListAPIView):
 class UserTeamListView(generics.ListAPIView):
     serializer_class = TeamSerializer
     permission_classes = [IsAuthenticated]
+    @extend_schema(tags=['TEAM'])
 
     def get_queryset(self):
         user = self.request.user
@@ -123,6 +131,7 @@ class TeamInfo(generics.RetrieveAPIView):
     serializer_class = TeamSerializer
     permission_classes = [IsAuthenticated]
     lookup_field = 'id'
+    @extend_schema(tags=['TEAM'])
 
     def get_object(self):
         team_id = self.kwargs.get("team_id")

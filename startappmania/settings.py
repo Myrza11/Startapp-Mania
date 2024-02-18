@@ -25,12 +25,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-f-24pr+_s*jc_kh&z16f%46na=dkk2hfckgvr_lv&wft9)74j('
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '217.151.230.35']
+ALLOWED_HOSTS = ("*",)
 
-
-# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -167,7 +165,7 @@ SPECTACULAR_SETTINGS = {
 AUTH_USER_MODEL = 'regauth.CustomUsers'
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=7),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=14),
     'SLIDING_TOKEN_LIFETIME': timedelta(days=14),

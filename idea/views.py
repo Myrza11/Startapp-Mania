@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from .models import Idea, IdeaLikes, IdeaComment, IdeaCommentLikes, IdeaSupporter
 from .serializers import IdeaSerializer, IdeaCommentSerializer, IdeaSupporterSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from drf_spectacular.utils import extend_schema
 
 
 class CommentReplyCreateView(generics.CreateAPIView):
@@ -11,6 +12,7 @@ class CommentReplyCreateView(generics.CreateAPIView):
     """
     permission_classes = [IsAuthenticated]
     serializer_class = IdeaCommentSerializer
+    @extend_schema(tags=['IDEA'])
 
     def post(self, request, *args, **kwargs):
         idea_id = kwargs.get('idea_id')
@@ -38,6 +40,7 @@ class IdeaCreate(generics.CreateAPIView):
     """
     permission_classes = [IsAuthenticated]
     serializer_class = IdeaSerializer
+    @extend_schema(tags=['IDEA'])
 
     def post(self, request, *args, **kwargs):
         user = request.user
@@ -60,6 +63,7 @@ class IdeaLikeView(generics.CreateAPIView):
     """
     permission_classes = [IsAuthenticated]
     serializer_class = IdeaSerializer
+    @extend_schema(tags=['IDEA'])
 
     def post(self, request, *args, **kwargs):
         try:
@@ -88,6 +92,7 @@ class IdeaCommentCreateView(generics.CreateAPIView):
     """
     permission_classes = [IsAuthenticated]
     serializer_class = IdeaCommentSerializer
+    @extend_schema(tags=['IDEA'])
 
     def post(self, request, *args, **kwargs):
         try:
@@ -114,6 +119,7 @@ class IdeaCommentLikeView(generics.CreateAPIView):
     """
     permission_classes = [IsAuthenticated]
     serializer_class = IdeaCommentSerializer
+    @extend_schema(tags=['IDEA'])
 
 
     def post(self, request, *args, **kwargs):
@@ -139,6 +145,7 @@ class IdeaSupporterView(generics.CreateAPIView):
     """
     permission_classes = [IsAuthenticated]
     serializer_class = IdeaSerializer
+    @extend_schema(tags=['IDEA'])
 
     def post(self, request, *args, **kwargs):
         try:
@@ -163,6 +170,7 @@ class UserIdeasView(generics.ListAPIView):
     """
     serializer_class = IdeaSerializer
     permission_classes = [IsAuthenticated]
+    @extend_schema(tags=['IDEA'])
 
     def get_queryset(self):
         user = self.request.user
@@ -175,6 +183,7 @@ class IdeaAllCommentsView(generics.ListAPIView):
     """
     permission_classes = [IsAuthenticated]
     serializer_class = IdeaCommentSerializer
+    @extend_schema(tags=['IDEA'])
 
     def get_queryset(self):
         idea_id = self.kwargs.get('pk')
@@ -188,6 +197,7 @@ class IdeaDetailView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = IdeaSerializer
     queryset = Idea.objects.all()
+    @extend_schema(tags=['IDEA'])
 
     def get(self, request, *args, **kwargs):
         idea = self.get_object()

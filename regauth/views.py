@@ -13,29 +13,36 @@ from rest_framework.permissions import IsAuthenticated
 from .forms import CaptchaSerializer
 from rest_framework import generics, status
 
+from rest_framework.response import Response
+from rest_framework import status
+
 
 class UserRegistrationView(APIView):
     permission_classes = [AllowAny]
     serializer_class = UserRegistrationSerializer
+
     @extend_schema(tags=['Registration and Authentication'])
-
-
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
 
+            # Отправляем письмо с подтверждением регистрации
             confirmation_code = user.confirmation_code
             subject = 'Confirmation code'
             message = f'Your confirmation code is: {confirmation_code}'
-            from_email = 'bapaevmyrza038@gmail.com'  
+            from_email = 'bapaevmyrza038@gmail.com'
             recipient_list = [user.email]
-
             send_mail(subject, message, from_email, recipient_list, fail_silently=False)
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            # Возвращаем ответ с данными пользователя и сообщением
+            return Response({
+                'user': serializer.data,
+                'message': 'Confirmation code sent successfully.'
+            }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
+    @extend_schema(tags=['Registration and Authentication'])
     def patch(self, request):
         confirmation_code = request.data.get('confirmation_code')
         if not confirmation_code:
@@ -45,12 +52,22 @@ class UserRegistrationView(APIView):
             user = CustomUsers.objects.get(confirmation_code=confirmation_code, is_active=False)
         except CustomUsers.DoesNotExist:
             return Response({'error': 'Invalid or expired confirmation code.'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         user.is_active = True
         user.save()
 
-        return Response({'message': 'Email confirmed successfully.'}, status=status.HTTP_200_OK)
-    
+        # Генерируем новые токены и возвращаем их вместе с информацией о пользователе
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+
+        return Response({
+            'message': 'Email confirmed successfully.',
+            'user': UserSerializer(user).data,
+            'access_token': access_token,
+            'refresh_token': refresh_token
+        }, status=status.HTTP_200_OK)
+
 
 class CustomUserLoginView(TokenObtainPairView):
     @extend_schema(tags=['Registration and Authentication'])
@@ -207,11 +224,8 @@ class CaptchaView(APIView):
 
 
 class UserListView(generics.ListAPIView):
-
     permission_classes = [IsAuthenticated]
-
     serializer_class = UserSerializer
-
     queryset = CustomUsers.objects.all()
 
 
@@ -238,3 +252,37 @@ class UserUpdateView(RetrieveUpdateDestroyAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+class WorksCreateAPIView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = WorksSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+
+class WorksListAPIView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = WorksSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        return Works.objects.filter(created_by=user)
+
+
+class SocialsCreateAPIView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = SocialsSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+
+class SocialsListAPIView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = SocialsSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        return Socials.objects.filter(created_by=user)

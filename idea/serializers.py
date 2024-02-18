@@ -49,20 +49,5 @@ class IdeaSerializer(serializers.ModelSerializer):
         comments_data = IdeaCommentSerializer(idea_comments, many=True).data
         representation['comments'] = comments_data
         return representation
-# class IdeaSerializer(serializers.ModelSerializer):
-#     comments = IdeaCommentSerializer(many=True, read_only=True)
-#     supporters = serializers.SerializerMethodField()
-#
-#     class Meta:
-#         model = Idea
-#         fields = ['id', 'name', 'description', 'created_at', 'likes', 'created_by', 'supporters', 'comments']
-#
-#     def to_representation(self, instance):
-#         representation = super().to_representation(instance)
-#         idea_comments = IdeaComment.objects.filter(idea=instance)
-#         comments_data = IdeaCommentSerializer(idea_comments, many=True).data
-#         representation['comments'] = comments_data
-#         return representation
-#
-#     def get_supporters(self, obj):
-#         return [user.username for user in obj.supporters.all()]
+
+
