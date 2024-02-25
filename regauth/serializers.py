@@ -1,3 +1,5 @@
+import os
+
 from rest_framework import serializers
 from .models import *
 from django.core.validators import RegexValidator
@@ -17,17 +19,11 @@ from team.serializers import TeamSerializer
 class UserRegistrationSerializer(serializers.ModelSerializer):
 
     password = serializers.CharField(write_only=True)
-
     password_confirm = serializers.CharField(write_only=True)
     username = serializers.CharField(
-        validators=[RegexValidator(regex='^[a-zA-Z]*$', message='Only letters are allowed.'),
-                    UniqueValidator(queryset=CustomUsers.objects.all(), message='This username is already in use.')]
+        validators=[RegexValidator(regex='^[a-zA-Z]*$', message='Only letters are allowed.')]
     )
-    email = serializers.EmailField(
-        validators=[
-            UniqueValidator(queryset=CustomUsers.objects.all(), message='This email is already in use.')
-        ]
-    )
+    email = serializers.EmailField()
     phone_number = PhoneNumberField()
     name = serializers.CharField(max_length=50)
 
@@ -36,7 +32,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'email', 'name', 'phone_number', 'avatar', 'confirmation_code',  'password', 'password_confirm', 'created_at', 'is_active']
 
     def validate_password(self, data):
-        if validate_password(data) is not None:
+        if len(data) < 8:
             raise serializers.ValidationError("Password min length is 8")
         return data
 
@@ -46,22 +42,20 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return data
 
     def validate(self, data):
-        
         if data.get('password') != data.get('password_confirm'):
             raise serializers.ValidationError("Passwords do not match.")
-
         return data
-    
+
     def create(self, validated_data):
         confirmation_code = get_random_string(length=20)
 
-        works_data = validated_data.pop('works', None)  # Получаем данные о работах (если есть)
+        works_data = validated_data.pop('works', None)
         socials_data = validated_data.pop('socials', None)
-        
+
         user = CustomUsers.objects.create_user(
             username=validated_data['username'],
             name=validated_data['name'],
-            email=validated_data.get('email'),
+            email=validated_data['email'],
             password=validated_data['password'],
             phone_number=validated_data['phone_number'],
             is_active=False,
@@ -80,6 +74,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         recipient_list = [user.email]
 
         send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+
         return user
     
 
@@ -106,13 +101,103 @@ class ResetPasswordSerializer(serializers.Serializer):
 class WorksSerializer(serializers.ModelSerializer):
     class Meta:
         model = Works
-        fields = ['id', 'name', 'logo', 'link']
+        fields = ['id', 'name', 'link']
+
+    def validate(self, data):
+        name = data.get('name')
+        link = data.get('link')
+
+        if not name:
+            raise serializers.ValidationError("Name field cannot be empty")
+
+        if not link:
+            raise serializers.ValidationError("Link field cannot be empty")
+
+        return data
+
+    def create(self, validated_data):
+        link = validated_data.get('link', '')
+
+        social_networks = {
+            'github': 'github.com',
+            'gitlab': 'gitlab.com',
+            'figma': 'figma.com',
+            # Другие социальные сети...
+        }
+
+        for network, url in social_networks.items():
+            if url in link:
+                validated_data['name'] = network
+                break
+
+        return super().create(validated_data)
+
+    def get_social_network_logo(self, social_network):
+        LOGO_DIR = 'logos/'
+        # Маппинг логотипов для каждой социальной сети
+        social_network_logos = {
+            'github': 'github_logo.png',
+            'gitlab': 'gitlab_logo.png',
+            'figma': 'figma_logo.png',
+            # Другие социальные сети...
+        }
+        logo_filename = social_network_logos.get(social_network)
+        if logo_filename:
+            # Полный путь к логотипу
+            return os.path.join(LOGO_DIR, logo_filename)
+        return None
 
 
 class SocialsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Socials
-        fields = ['id', 'name', 'logo', 'link']
+        fields = ['id', 'name', 'link']
+
+    def validate(self, data):
+        name = data.get('name')
+        link = data.get('link')
+
+        if not name:
+            raise serializers.ValidationError("Name field cannot be empty")
+
+        if not link:
+            raise serializers.ValidationError("Link field cannot be empty")
+
+        return data
+
+    def create(self, validated_data):
+        link = validated_data.get('link', '')
+
+        social_networks = {
+            'whatsapp': 'whatsapp.com',
+            'instagram': 'instagram.com',
+            'telegram': 'telegram.org',
+            'gmail': 'gmail.com',
+            # Другие социальные сети...
+        }
+
+        for network, url in social_networks.items():
+            if url in link:
+                validated_data['name'] = network
+                break
+
+        return super().create(validated_data)
+
+    def get_social_network_logo(self, social_network):
+        # Директория, в которой хранятся логотипы социальных сетей
+        LOGO_DIR = 'logos/'
+        # Маппинг логотипов для каждой социальной сети
+        social_network_logos = {
+            'whatsapp': 'whatsapp_logo.png',
+            'instagram': 'instagram_logo.png',
+            'telegram': 'telegram_logo.png',
+            'gmail': 'gmail_logo.png',
+        }
+        logo_filename = social_network_logos.get(social_network)
+        if logo_filename:
+            # Полный путь к логотипу
+            return os.path.join(LOGO_DIR, logo_filename)
+        return None
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -143,7 +228,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUsers
-        fields = ['id', 'username', 'name', 'second_name', 'email', 'phone_number', 'avatar', 'created_at', 'confirmation_code',  'is_active', 'skills', 'tags',  'teams', 'works', 'socials', 'ideas']
+        fields = ['id', 'username', 'name', 'second_name', 'email', 'phone_number', 'avatar',  'created_at', 'confirmation_code',  'is_active', 'skills', 'tags',  'teams', 'works', 'socials', 'ideas']
 
 
 

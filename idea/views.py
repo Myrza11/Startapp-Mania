@@ -85,6 +85,34 @@ class IdeaLikeView(generics.CreateAPIView):
             return Response({'detail': 'No idea'}, status=status.HTTP_400_BAD_REQUEST)
 
 
+class IdeaDeliteLikeView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = IdeaSerializer
+
+    @extend_schema(tags=['IDEA'])
+    def post(self, request, *args, **kwargs):
+        try:
+            user = request.user
+            idea_id = kwargs.get('pk')
+            idea = Idea.objects.get(pk=idea_id)
+
+            idea_like = IdeaLikes.objects.filter(user=user, likes=idea).first()
+
+            if not idea_like:
+                return Response({'detail': 'You have not liked this idea yet.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            idea.likes -= 1
+            idea.save()
+
+            # Удаляем лайк данного пользователя для этой идеи
+            idea_like.delete()
+
+            serializer = self.serializer_class(idea)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Idea.DoesNotExist:
+            return Response({'detail': 'Idea not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+
 
 class IdeaCommentCreateView(generics.CreateAPIView):
     """

@@ -41,7 +41,7 @@ class IdeaSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'description', 'created_at', 'likes', 'created_by', 'supporters', 'comments']
 
     def get_supporters(self, obj):
-        return [user.username for user in obj.supporters.all()]
+        return [user.id for user in obj.supporters.all()]
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)

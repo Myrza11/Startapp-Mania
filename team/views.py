@@ -1,3 +1,4 @@
+
 from rest_framework import generics, permissions
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
@@ -5,28 +6,34 @@ from rest_framework.response import Response
 from rest_framework import status
 from idea.models import Idea
 from regauth.models import CustomUsers
-from .models import Message, Chat, Team, Invitation
-from .serializers import MessageSerializer, TeamSerializer, TeamCreateSerializer, InvitationSerializer
+from .models import  Team, Invitation
+from .serializers import TeamSerializer, TeamCreateSerializer, InvitationSerializer
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
-
+from rest_framework.views import APIView
+from rest_framework.exceptions import ValidationError
 
 
 class CreateTeamFromIdea(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = TeamCreateSerializer
-    @extend_schema(tags=['TEAM'])
 
+    @extend_schema(tags=['TEAM'])
     def post(self, request, *args, **kwargs):
         idea_id = request.data.get('idea_id')
         supporters = request.data.get('supporters', [])
+
+        idea = get_object_or_404(Idea, pk=idea_id)
+        supported_users = idea.supporters.all()
+        for user_id in supporters:
+            if user_id not in supported_users.values_list('id', flat=True):
+                raise ValidationError({'detail': 'Пользователь {} не поддерживает данную идею.'.format(user_id)})
 
         team_data = {
                     'name': request.data.get('name'),
                     'description': request.data.get('description', ''),
                     'captain': request.user.pk,
                     'idea': idea_id,
-
         }
 
         serializer = self.serializer_class(data=team_data)
@@ -39,40 +46,27 @@ class CreateTeamFromIdea(generics.CreateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class SendMessageView(generics.CreateAPIView):
+class SendTeamInvitation(APIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = MessageSerializer
-    @extend_schema(tags=['TEAM'])
 
     def post(self, request, *args, **kwargs):
-        team_id = kwargs.get('team_id')
-        chat_id = kwargs.get('chat_id')
-        text = request.data.get('text')
+        user_id = request.data.get('user_id')
+        team_id = request.data.get('team_id')  # предположим, что у вас есть URL с team_id
 
-        try:
-            team = Team.objects.get(pk=team_id)
-        except Team.DoesNotExist:
-            return Response({'detail': 'Команда не найдена'}, status=status.HTTP_404_NOT_FOUND)
+        team = Team.objects.get(id=team_id)
+        if team.captain != request.user:
+            return Response({'detail': 'У вас нет прав на отправку приглашения в эту команду.'}, status=status.HTTP_403_FORBIDDEN)
 
-        if request.user not in team.participants.all():
-            return Response({'detail': 'Вы не являетесь участником этой команды'}, status=status.HTTP_403_FORBIDDEN)
+        invitation = Invitation.objects.create(sender=request.user, recipient_id=user_id, team_id=team_id)
 
-        try:
-            chat = Chat.objects.get(pk=chat_id, team=team)
-        except Chat.DoesNotExist:
-            chat = Chat.objects.create(team=team)
-            chat.users.set(team.participants.all())
-
-        message = Message.objects.create(chat=chat, sender=request.user, text=text)
-        serializer = MessageSerializer(message)
-
+        serializer = InvitationSerializer(invitation)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class AcceptInvitationView(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
-    @extend_schema(tags=['TEAM'])
 
+    @extend_schema(tags=['TEAM'])
     def post(self, request, *args, **kwargs):
         invitation_id = request.data.get('invitation_id')
 

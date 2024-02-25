@@ -1,20 +1,17 @@
 from django.conf import settings
-from drf_spectacular.utils import extend_schema
-from rest_framework.generics import RetrieveAPIView, RetrieveUpdateDestroyAPIView, get_object_or_404
-
-from .models import ConfirmationCode
+from rest_framework.generics import  RetrieveUpdateDestroyAPIView, get_object_or_404
 from rest_framework.permissions import AllowAny
 from .serializers import *
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from rest_framework.permissions import IsAuthenticated
 from .forms import CaptchaSerializer
-from rest_framework import generics, status
-
+from rest_framework import generics
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from django.core.mail import send_mail
+from .serializers import UserRegistrationSerializer
 
 
 class UserRegistrationView(APIView):
@@ -27,7 +24,6 @@ class UserRegistrationView(APIView):
         if serializer.is_valid():
             user = serializer.save()
 
-            # Отправляем письмо с подтверждением регистрации
             confirmation_code = user.confirmation_code
             subject = 'Confirmation code'
             message = f'Your confirmation code is: {confirmation_code}'
@@ -232,13 +228,12 @@ class UserListView(generics.ListAPIView):
 class UserSearchView(APIView):
     permission_classes = [IsAuthenticated]
     @extend_schema(tags=['Registration and Authentication'])
-
     def get(self, request, pk):
         # Получаем пользователя по идентификатору (primary key)
         user = get_object_or_404(CustomUsers, pk=pk)
 
         # Сериализуем пользователя
-        serializer = UserSerializer(user)
+        serializer = UserSerializer(user, context={'request': request})
 
         return Response(serializer.data)
 
