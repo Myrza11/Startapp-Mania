@@ -1,4 +1,5 @@
 import os
+from sqlite3 import IntegrityError
 
 from rest_framework import serializers
 from .models import *
@@ -47,36 +48,40 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        confirmation_code = get_random_string(length=20)
+        try:
+            confirmation_code = get_random_string(length=20)
 
-        works_data = validated_data.pop('works', None)
-        socials_data = validated_data.pop('socials', None)
+            works_data = validated_data.pop('works', None)
+            socials_data = validated_data.pop('socials', None)
 
-        user = CustomUsers.objects.create_user(
-            username=validated_data['username'],
-            name=validated_data['name'],
-            email=validated_data['email'],
-            password=validated_data['password'],
-            phone_number=validated_data['phone_number'],
-            is_active=False,
-            confirmation_code=confirmation_code,
-        )
+            user = CustomUsers.objects.create_user(
+                username=validated_data['username'],
+                name=validated_data['name'],
+                email=validated_data['email'],
+                password=validated_data['password'],
+                phone_number=validated_data['phone_number'],
+                is_active=False,
+                confirmation_code=confirmation_code,
+            )
 
-        if works_data:
-            Works.objects.create(created_by=user, **works_data)
+            if works_data:
+                Works.objects.create(created_by=user, **works_data)
 
-        if socials_data:
-            Socials.objects.create(created_by=user, **socials_data)
+            if socials_data:
+                Socials.objects.create(created_by=user, **socials_data)
 
-        subject = 'Confirmation code'
-        message = f'Your confirmation code is: {confirmation_code}'
-        from_email = 'bapaevmyrza038@gmail.com'
-        recipient_list = [user.email]
+            subject = 'Confirmation code'
+            message = f'Your confirmation code is: {confirmation_code}'
+            from_email = 'bapaevmyrza038@gmail.com'
+            recipient_list = [user.email]
 
-        send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+            send_mail(subject, message, from_email, recipient_list, fail_silently=False)
 
-        return user
-    
+            return user
+
+        except IntegrityError:
+            raise serializers.ValidationError("Email already exists")
+
 
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)

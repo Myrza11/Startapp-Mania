@@ -192,6 +192,34 @@ class IdeaSupporterView(generics.CreateAPIView):
             return Response({'detail': 'No idea'}, status=status.HTTP_400_BAD_REQUEST)
 
 
+
+class IdeaSupporterDeclineView(generics.CreateAPIView):
+    """
+    Апи для отмены поддержки идеи
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = IdeaSerializer
+
+    @extend_schema(tags=['IDEA'])
+    def post(self, request, *args, **kwargs):
+        try:
+            user = request.user
+            idea_id = kwargs.get('pk')
+            idea = Idea.objects.get(pk=idea_id)
+
+            # Проверка, поддерживал ли пользователь эту идею до этого
+            if not IdeaSupporter.objects.filter(user=user, idea=idea).exists():
+                return Response({'detail': 'You have not supported this idea yet.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Отмена поддержки
+            IdeaSupporter.objects.filter(user=user, idea=idea).delete()
+
+            serializer = self.serializer_class(idea)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Idea.DoesNotExist:
+            return Response({'detail': 'Idea not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+
 class UserIdeasView(generics.ListAPIView):
     """
     Авторизованный юзер получает все данные об всех его Идей

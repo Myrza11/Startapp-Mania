@@ -1,5 +1,5 @@
 from django.conf import settings
-from rest_framework.generics import  RetrieveUpdateDestroyAPIView, get_object_or_404
+from rest_framework.generics import RetrieveUpdateDestroyAPIView, get_object_or_404
 from rest_framework.permissions import AllowAny
 from .serializers import *
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.core.mail import send_mail
 from .serializers import UserRegistrationSerializer
+from .tasks import cleanup_inactive_users
 
 
 class UserRegistrationView(APIView):
@@ -31,6 +32,7 @@ class UserRegistrationView(APIView):
             recipient_list = [user.email]
             send_mail(subject, message, from_email, recipient_list, fail_silently=False)
 
+            self.cleanup_inactive_users()
             # Возвращаем ответ с данными пользователя и сообщением
             return Response({
                 'user': serializer.data,

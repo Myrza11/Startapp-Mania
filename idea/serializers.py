@@ -35,13 +35,27 @@ class IdeaCommentSerializer(serializers.ModelSerializer):
 
 class IdeaSerializer(serializers.ModelSerializer):
     supporters = serializers.SerializerMethodField()
+    user_liked = serializers.SerializerMethodField()
+    is_supported = serializers.SerializerMethodField()
 
     class Meta:
         model = Idea
-        fields = ['id', 'name', 'description', 'created_at', 'likes', 'created_by', 'supporters', 'comments']
+        fields = ['id', 'name', 'description', 'created_at', 'likes', 'created_by', 'supporters', 'comments', 'user_liked', 'tag', 'is_supported']
 
     def get_supporters(self, obj):
         return [user.id for user in obj.supporters.all()]
+
+    def get_user_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return IdeaLikes.objects.filter(user=request.user, likes=obj).exists()
+        return False
+
+    def get_is_supported(self, obj):  # Метод для определения, поддерживает ли пользователь данную идею
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return IdeaSupporter.objects.filter(user=request.user, idea=obj).exists()
+        return False
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
