@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'team',
     'event',
+    'rest_framework'
 ]
 
 MIDDLEWARE = [

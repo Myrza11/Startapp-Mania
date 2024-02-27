@@ -1,6 +1,5 @@
 import os
 from sqlite3 import IntegrityError
-
 from rest_framework import serializers
 from .models import *
 from django.core.validators import RegexValidator
@@ -15,7 +14,12 @@ from rest_framework import serializers
 from .models import CustomUsers, Works, Socials
 from idea.serializers import IdeaSerializer
 from team.serializers import TeamSerializer
+import phonenumbers
+from django.core.exceptions import ObjectDoesNotExist
+from rest_framework import serializers
+from django.contrib.auth import get_user_model
 
+CustomUser = get_user_model()
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
 
@@ -25,12 +29,12 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         validators=[RegexValidator(regex='^[a-zA-Z]*$', message='Only letters are allowed.')]
     )
     email = serializers.EmailField()
-    phone_number = PhoneNumberField()
     name = serializers.CharField(max_length=50)
+    phone_number = serializers.CharField()
 
     class Meta:
         model = CustomUsers
-        fields = ['id', 'username', 'email', 'name', 'phone_number', 'avatar', 'confirmation_code',  'password', 'password_confirm', 'created_at', 'is_active']
+        fields = ['id', 'username', 'email', 'name', 'phone_number', 'avatar', 'confirmation_code', 'password', 'password_confirm', 'created_at', 'is_active']
 
     def validate_password(self, data):
         if len(data) < 8:
@@ -49,17 +53,30 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         try:
+            existing_user = CustomUser.objects.get(email=validated_data['email'])
+            raise serializers.ValidationError("User with this email already exists")
+        except ObjectDoesNotExist:
+            pass
+        try:
             confirmation_code = get_random_string(length=20)
 
             works_data = validated_data.pop('works', None)
             socials_data = validated_data.pop('socials', None)
+
+            phone_number = validated_data.get('phone_number')  # Получаем значение телефонного номера из данных, если оно существует
+
+            if phone_number is None:  # Если телефонный номер отсутствует
+                raise serializers.ValidationError("Phone number is required")
+
+            # Парсинг телефонного номера с использованием phonenumbers
+            parsed_phone_number = phonenumbers.parse(phone_number, None)
 
             user = CustomUsers.objects.create_user(
                 username=validated_data['username'],
                 name=validated_data['name'],
                 email=validated_data['email'],
                 password=validated_data['password'],
-                phone_number=validated_data['phone_number'],
+                phone_number=phone_number,  # Используем значение телефонного номера
                 is_active=False,
                 confirmation_code=confirmation_code,
             )
@@ -70,17 +87,15 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             if socials_data:
                 Socials.objects.create(created_by=user, **socials_data)
 
-            subject = 'Confirmation code'
-            message = f'Your confirmation code is: {confirmation_code}'
-            from_email = 'bapaevmyrza038@gmail.com'
-            recipient_list = [user.email]
-
-            send_mail(subject, message, from_email, recipient_list, fail_silently=False)
-
             return user
 
         except IntegrityError:
             raise serializers.ValidationError("Email already exists")
+
+    def validate_phone_number(self, value):
+        if not value:
+            raise serializers.ValidationError("Phone number is required")
+        return value
 
 
 class ChangePasswordSerializer(serializers.Serializer):

@@ -1,8 +1,6 @@
-from django.db import transaction
-from .models import CustomUsers
+from celery import shared_task
+from django.core.mail import send_mail
 
-# Асинхронная функция для удаления неактивированных пользователей
-@transaction.atomic
-async def cleanup_inactive_users():
-    users_to_delete = CustomUsers.objects.filter(is_active=False)
-    users_to_delete.delete()
+@shared_task
+def send_email_task(subject, message, from_email, recipient_list):
+    send_mail(subject, message, from_email, recipient_list)

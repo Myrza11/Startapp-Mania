@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.core.mail import send_mail
 from .serializers import UserRegistrationSerializer
-from .tasks import cleanup_inactive_users
+from .tasks import send_email_task
 
 
 class UserRegistrationView(APIView):
@@ -30,9 +30,9 @@ class UserRegistrationView(APIView):
             message = f'Your confirmation code is: {confirmation_code}'
             from_email = 'bapaevmyrza038@gmail.com'
             recipient_list = [user.email]
-            send_mail(subject, message, from_email, recipient_list, fail_silently=False)
 
-            self.cleanup_inactive_users()
+            send_mail(subject, message, from_email, recipient_list)
+
             # Возвращаем ответ с данными пользователя и сообщением
             return Response({
                 'user': serializer.data,
